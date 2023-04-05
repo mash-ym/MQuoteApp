@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Data;
+using System.Data.SQLite;
+using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace MQuoteApp
 {
@@ -18,6 +22,7 @@ namespace MQuoteApp
         public List<EstimateItem> SubItems { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public string ItemName { get; internal set; }
 
         public EstimateItem(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
         {
@@ -64,7 +69,22 @@ namespace MQuoteApp
                 return total;
             }
         }
-
+        public void SaveToDatabase(string connectionString)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                var command = new SqlCommand();
+                command.Connection = connection;
+                command.CommandType = CommandType.Text;
+                command.CommandText = "INSERT INTO EstimateItems (Description, Quantity, UnitPrice, SubcontractorName) VALUES (@Description, @Quantity, @UnitPrice, @SubcontractorName)";
+                command.Parameters.AddWithValue("@Description", this.Description);
+                command.Parameters.AddWithValue("@Quantity", this.Quantity);
+                command.Parameters.AddWithValue("@UnitPrice", this.UnitPrice);
+                command.Parameters.AddWithValue("@SubcontractorName", this.SubcontractorName);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
         public void AddSubItem(EstimateItem subItem)
         {
             SubItems.Add(subItem);
@@ -104,6 +124,8 @@ namespace MQuoteApp
             return duration;
         }
     }
+    
+
 
     public class ConstructionProject
     {

@@ -2,6 +2,8 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace MQuoteApp
 {
@@ -9,11 +11,94 @@ namespace MQuoteApp
     {
         // データベースファイルのパス
         private const string dbFilePath = @"C:\path\to\database.db";
-
+        TreeView treeView1 = new TreeView();
         public MainForm()
         {
             InitializeComponent();
+            // 新しいコンテキストメニューを作成する
+            ContextMenuStrip contextMenuStrip1 = new ContextMenuStrip();
+            // 新しいメニュー項目を作成する
+            ToolStripMenuItem menuItem1 = new ToolStripMenuItem();
+            menuItem1.Text = "Copy";
+            menuItem1.Click += new EventHandler(copyToolStripMenuItem_Click);
+
+            ToolStripMenuItem menuItem2 = new ToolStripMenuItem();
+            menuItem2.Text = "Delete";
+            menuItem2.Click += new EventHandler(delete_Click);
+            ToolStripMenuItem menuItem3 = new ToolStripMenuItem();
+            menuItem3.Text = "Paste";
+            menuItem3.Click += new EventHandler(pasteToolStripMenuItem_Click);
+
+            // コンテキストメニューにメニュー項目を追加する
+            contextMenuStrip1.Items.Add(menuItem1);
+            contextMenuStrip1.Items.Add(menuItem2);
+            contextMenuStrip1.Items.Add(menuItem3);
+            // 削除メニュー項目がクリックされたときの処理
+
+            // TreeViewのContextMenuStripプロパティに新しいコンテキストメニューを割り当てる
+            treeView1.ContextMenuStrip = contextMenuStrip1;
+
         }
+        public class QuoteData
+        {
+            public string ItemName { get; set; }
+            public int Quantity { get; set; }
+            public decimal UnitPrice { get; set; }
+            public object ProjectName { get; internal set; }
+        }
+
+        public class Project
+        {
+            public string Name { get; set; }
+            public List<QuoteData> Quotes { get; set; }
+
+            public Project(string name)
+            {
+                Name = name;
+                Quotes = new List<QuoteData>();
+            }
+
+            public void AddQuoteData(QuoteData data)
+            {
+                Quotes.Add(data);
+            }
+
+            public List<QuoteData> GetQuoteData()
+            {
+                return Quotes;
+            }
+        }
+        private void delete_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null)
+            {
+                treeView1.SelectedNode.Remove();
+            }
+        }
+        private TreeNode copiedNode;
+        private void ShowProjectData(Project project)
+        {
+            dataGridView1.DataSource = project.GetQuoteData();
+        }
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null)
+            {
+                // 選択されたノードをコピー
+                copiedNode = (TreeNode)treeView1.SelectedNode.Clone();
+            }
+        }
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (copiedNode != null && treeView1.SelectedNode != null)
+            {
+                // 貼り付け先のノードにコピーしたノードを追加
+                treeView1.SelectedNode.Nodes.Add((TreeNode)copiedNode.Clone());
+                treeView1.SelectedNode.Expand();
+            }
+        }
+
+
 
         // 新規プロジェクト作成ボタンがクリックされたときの処理
         private void NewProjectButton_Click(object sender, EventArgs e)
@@ -23,9 +108,21 @@ namespace MQuoteApp
             var projectNode = new TreeNode(newProject.Name);
             projectNode.Tag = newProject;
             treeView1.Nodes.Add(projectNode);
+            List<EstimateItem> estimateItems = new List<EstimateItem>();
 
             // DataGridViewに空のデータを表示
             dataGridView1.DataSource = new DataTable();
+            // ルートノードを追加する
+            TreeNode rootNode = new TreeNode("見積");
+            treeView1.Nodes.Add(rootNode);
+
+            // EstimateItemクラスのリストからTreeNodeを生成する
+            foreach (EstimateItem item in estimateItems)
+            {
+                TreeNode itemNode = new TreeNode(item.ItemName);
+                itemNode.Tag = item;
+                rootNode.Nodes.Add(itemNode);
+            }
         }
 
         // ノードが選択されたときの処理
@@ -46,6 +143,57 @@ namespace MQuoteApp
                 ShowQuoteData(new QuoteData[] { quote });
             }
         }
+        
+
+    // EstimateItemクラスからTreeNodeクラスに変換する
+    private TreeNode ConvertToTreeNode(EstimateItem item)
+        {
+            TreeNode node = new TreeNode();
+            node.Text = item.Name;
+            node.Tag = item;
+            return node;
+        }
+
+        // EstimateItemリストからTreeViewに表示するためのTreeNodeリストに変換する
+        private List<TreeNode> ConvertToTreeNodes(List<EstimateItem> items)
+        {
+            List<TreeNode> nodes = new List<TreeNode>();
+            foreach (EstimateItem item in items)
+            {
+                TreeNode node = ConvertToTreeNode(item);
+                nodes.Add(node);
+            }
+            return nodes;
+        }
+        private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            // ノードをドラッグする
+            DoDragDrop(e.Item, DragDropEffects.Move);
+        }
+        private void treeView1_DragEnter(object sender, DragEventArgs e)
+        {
+            // ノードのみを受け入れる
+            if (e.Data.GetDataPresent(typeof(TreeNode)))
+            {
+                e.Effect = DragDropEffects.Move;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+        private void treeView1_DragDrop(object sender, DragEventArgs e)
+        {
+            // ドロップされたノードをTreeViewに追加する
+            TreeNode newNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
+            Point pt = treeView1.PointToClient(new Point(e.X, e.Y));
+            TreeNode targetNode = treeView1.GetNodeAt(pt);
+            targetNode.Nodes.Add((TreeNode)newNode.Clone());
+            newNode.Remove();
+            targetNode.Expand();
+        }
+
+
 
         // DataGridViewに見積データを表示するメソッド
         private void ShowQuoteData(QuoteData[] quotes)
@@ -85,46 +233,5 @@ namespace MQuoteApp
                 connection.Close();
             }
         }
-
-        // DataGridViewのセルがダブルクリックされたときの処理
-        private void DataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        { // 選択された行の見積データを取得
-            var selectedRow = dataGridView1.Rows[e.RowIndex];
-            var projectName = selectedRow.Cells["ProjectName"].Value.ToString();
-            var subcontractorName = selectedRow.Cells["SubcontractorName"].Value.ToString();
-            var amount = selectedRow.Cells["Amount"].Value.ToString();
-            var date = selectedRow.Cells["Date"].Value.ToString();
-            // 見積データを編集するダイアログを表示
-            using (var dialog = new EditQuoteDialog())
-            {
-                dialog.ProjectName = projectName;
-                dialog.SubcontractorName = subcontractorName;
-                dialog.Amount = amount;
-                dialog.Date = date;
-
-                var result = dialog.ShowDialog();
-
-                if (result == DialogResult.OK)
-                {
-                    // 編集された見積データを保存
-                    var editedQuote = new QuoteData
-                    {
-                        ProjectName = dialog.ProjectName,
-                        SubcontractorName = dialog.SubcontractorName,
-                        Amount = dialog.Amount,
-                        Date = dialog.Date
-                    };
-
-                    quoteManager.UpdateQuoteData(selectedRow.Index, editedQuote);
-
-                    // DataGridViewに表示されている見積データを更新
-                    dataGridView1.Rows[selectedRow.Index].Cells["ProjectName"].Value = editedQuote.ProjectName;
-                    dataGridView1.Rows[selectedRow.Index].Cells["SubcontractorName"].Value = editedQuote.SubcontractorName;
-                    dataGridView1.Rows[selectedRow.Index].Cells["Amount"].Value = editedQuote.Amount;
-                    dataGridView1.Rows[selectedRow.Index].Cells["Date"].Value = editedQuote.Date;
-                }
-            }
-        }
-
     }
 }
