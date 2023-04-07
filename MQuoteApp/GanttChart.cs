@@ -6,6 +6,41 @@ namespace MQuoteApp
     // ガントチャートを表すクラス
     public class GanttChart
     {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public List<GanttChartItem> Items { get; set; }
+
+        public GanttChart(DateTime startDate, DateTime endDate, List<GanttChartItem> items)
+        {
+            StartDate = startDate;
+            EndDate = endDate;
+            Items = items;
+        }
+        public class GanttChartItem
+        {
+            public string ProjectName { get; set; }
+            public DateTime StartDate { get; set; }
+            public DateTime EndDate { get; set; }
+
+            public GanttChartItem(string projectName, DateTime startDate, DateTime endDate)
+            {
+                ProjectName = projectName;
+                StartDate = startDate;
+                EndDate = endDate;
+            }
+        }public class GanttChartItem
+    {
+        public string ProjectName { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+
+        public GanttChartItem(string projectName, DateTime startDate, DateTime endDate)
+        {
+            ProjectName = projectName;
+            StartDate = startDate;
+            EndDate = endDate;
+        }
+    }
         // タスクリスト
         private List<Task> tasks = new List<Task>();
 
