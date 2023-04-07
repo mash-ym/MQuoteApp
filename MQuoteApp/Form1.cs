@@ -233,5 +233,10 @@ namespace MQuoteApp
                 connection.Close();
             }
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
