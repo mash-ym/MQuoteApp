@@ -39,35 +39,7 @@ namespace MQuoteApp
             treeView1.ContextMenuStrip = contextMenuStrip1;
 
         }
-        public class QuoteData
-        {
-            public string ItemName { get; set; }
-            public int Quantity { get; set; }
-            public decimal UnitPrice { get; set; }
-            public object ProjectName { get; internal set; }
-        }
-
-        public class Project
-        {
-            public string Name { get; set; }
-            public List<QuoteData> Quotes { get; set; }
-
-            public Project(string name)
-            {
-                Name = name;
-                Quotes = new List<QuoteData>();
-            }
-
-            public void AddQuoteData(QuoteData data)
-            {
-                Quotes.Add(data);
-            }
-
-            public List<QuoteData> GetQuoteData()
-            {
-                return Quotes;
-            }
-        }
+      
         private void delete_Click(object sender, EventArgs e)
         {
             if (treeView1.SelectedNode != null)
@@ -133,7 +105,7 @@ namespace MQuoteApp
             {
                 // DataGridViewにそのProjectの見積データを表示
                 var project = (Project)e.Node.Tag;
-                ShowQuoteData(project.Quotes);
+                ShowQuoteData(project.GetQuoteData);
             }
             // 選択されたノードがQuoteノードである場合
             else if (e.Node.Tag is QuoteData)
