@@ -21,10 +21,13 @@ namespace MQuoteApp
         public decimal EstimatedAmount { get; set; }
         public List<EstimateItem> SubItems { get; set; }
         public DateTime StartDate { get; set; }
+        public int WorkingDays { get; set; }
         public DateTime EndDate { get; set; }
         public string ItemName { get; internal set; }
+        public ConstructionProject Project { get; set; } // ConstructionProjectオブジェクトを保持するプロパティ
+        public string Description { get; set; }
 
-        public EstimateItem(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
+        public EstimateItem(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, ConstructionProject project)
         {
             Name = name;
             UnitPrice = unitPrice;
@@ -32,6 +35,7 @@ namespace MQuoteApp
             SubcontractorAmount = subcontractorAmount;
             EstimatedAmount = estimatedAmount;
             SubItems = new List<EstimateItem>();
+            Project = project;
         }
 
         public class EstimateSubcontractor
@@ -43,6 +47,7 @@ namespace MQuoteApp
             public decimal SubcontractorAmount { get; set; }
             public decimal EstimatedAmount { get; set; }
             public List<EstimateSubcontractor> SubItems { get; set; }
+
 
             public EstimateSubcontractor(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
             {
@@ -139,7 +144,12 @@ namespace MQuoteApp
             Name = name;
             StartDate = startDate;
             EndDate = endDate;
-            Items = items;
+            Items = new List<EstimateItem>();
+            foreach (var item in items)
+            {
+                // EstimateItemオブジェクトを生成する際に、関連するConstructionProjectオブジェクトを指定して生成する
+                Items.Add(new EstimateItem(item.Name, item.Amount, item.UnitPrice, item.StartDate, item.SubItems, this));
+            }
         }
 
         public decimal GetTotalCost()

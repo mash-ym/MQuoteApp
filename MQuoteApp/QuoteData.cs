@@ -1,26 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MQuoteApp
 {
     public class QuoteData
     {
-        public string Item { get; set; }
-        public decimal Quantity { get; set; }
-        public decimal Price { get; set; }
-        public decimal Total
-        {
-            get { return Quantity * Price; }
-        }
-        
-        public DateTime Date { get; set; }
+        public string ProjectName { get; set; }
+        public string SubcontractorName { get; set; }
+        public List<Estimate> Estimates { get; set; }
 
-        public QuoteData(string item, decimal quantity, decimal price, DateTime date)
+        public QuoteData(string projectName, string subcontractorName)
         {
-            Item = item;
-            Quantity = quantity;
-            Price = price;
-            Date = date;
+            ProjectName = projectName;
+            SubcontractorName = subcontractorName;
+            Estimates = new List<Estimate>();
+        }
+
+        public void AddEstimate(Estimate estimate)
+        {
+            Estimates.Add(estimate);
         }
     }
 }
-
