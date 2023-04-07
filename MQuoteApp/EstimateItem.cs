@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
-using System.Data.SQLite;
-using System.Windows.Forms;
 using System.Data.SqlClient;
 
 namespace MQuoteApp
 {
 
-    public class EstimateItem
+    public class EstimateItem : ProjectItem
     {
-        public string Name { get; set; }
         public decimal Amount { get; set; }
         public string Unit { get; set; }
         public decimal UnitPrice { get; set; }
@@ -20,16 +17,14 @@ namespace MQuoteApp
         public decimal SubcontractorAmount { get; set; }
         public decimal EstimatedAmount { get; set; }
         public List<EstimateItem> SubItems { get; set; }
-        public DateTime StartDate { get; set; }
-        public int WorkingDays { get; set; }
-        public DateTime EndDate { get; set; }
         public string ItemName { get; internal set; }
         public ConstructionProject Project { get; set; } // ConstructionProjectオブジェクトを保持するプロパティ
         public string Description { get; set; }
 
-        public EstimateItem(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, ConstructionProject project)
+        public EstimateItem(string name, string remarks, decimal unitPrice, decimal amount, DateTime startDate, DateTime endDate, decimal subcontractorAmount, decimal estimatedAmount, ConstructionProject project)
+            : base(name, startDate, endDate)
         {
-            Name = name;
+            Remarks = remarks;
             UnitPrice = unitPrice;
             Amount = amount;
             SubcontractorAmount = subcontractorAmount;
@@ -94,7 +89,15 @@ namespace MQuoteApp
         {
             SubItems.Add(subItem);
         }
-
+        public decimal GetSubtotal()
+        {
+            decimal subtotal = UnitPrice * Amount;
+            foreach (var item in SubItems)
+            {
+                subtotal += item.GetSubtotal();
+            }
+            return subtotal;
+        }
         public decimal GetTotalCost()
         {
             decimal total = EstimatedAmount;
@@ -103,6 +106,16 @@ namespace MQuoteApp
                 total += item.GetTotalCost();
             }
             return total;
+        }
+        public decimal CalculateSubcontractorAmount()
+        {
+            decimal subAmount = 0;
+            foreach (var item in SubItems)
+            {
+                subAmount += item.CalculateSubcontractorAmount();
+            }
+            subAmount += SubcontractorAmount;
+            return subAmount;
         }
 
         public int GetDuration()

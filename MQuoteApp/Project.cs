@@ -5,19 +5,18 @@ using System.Text;
 
 namespace MQuoteApp
 {
-    public class Project
+    public class Project : ProjectItem
     {
-        public string Name { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
         public List<EstimateItem> EstimateItems { get; set; }
-
-        public Project(string name, DateTime startDate, DateTime endDate, List<EstimateItem> estimateItems)
+        public List<Task> Tasks { get; set; }
+        public Project(string name, DateTime startDate, DateTime endDate, List<EstimateItem> estimateItems, List<Task> tasks)
+            :base(name, startDate ,endDate)
         {
             Name = name;
             StartDate = startDate;
             EndDate = endDate;
             EstimateItems = estimateItems;
+            Tasks = tasks;
         }
 
         public decimal GetTotalCost()

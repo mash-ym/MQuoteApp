@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MQuoteApp
 {
@@ -17,6 +14,12 @@ namespace MQuoteApp
         protected ProjectItem(string name, DateTime startDate, DateTime endDate)
         {
             Name = name;
+            StartDate = startDate;
+            EndDate = endDate;
+        }
+
+        protected ProjectItem(DateTime startDate, DateTime endDate)
+        {
             StartDate = startDate;
             EndDate = endDate;
         }
