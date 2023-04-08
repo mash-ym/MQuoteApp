@@ -12,9 +12,18 @@ namespace MQuoteApp
         // データベースファイルのパス
         private const string dbFilePath = @"C:\path\to\database.db";
         TreeView treeView1 = new TreeView();
+
+        private Quote quote = new Quote(); // Quoteクラスのインスタンスを保持する
+        private QuoteDGV quoteDGV; // QuoteDGVクラスのインスタンスを保持する
+
         public MainForm()
         {
             InitializeComponent();
+            // QuoteDGVクラスのオブジェクトを作成する。
+            quoteDGV = new QuoteDGV();
+            quoteDGV.Update();
+            quoteDGV = new QuoteDGV(quote); // QuoteDGVインスタンスを生成する
+
             // 新しいコンテキストメニューを作成する
             ContextMenuStrip contextMenuStrip1 = new ContextMenuStrip();
             // 新しいメニュー項目を作成する
