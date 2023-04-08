@@ -10,43 +10,76 @@ namespace MQuoteApp
 
     public class EstimateItem : ProjectItem
     {
-        public decimal Amount { get; set; }
-        public string Unit { get; set; }
-        public decimal UnitPrice { get; set; }
-        public string Remarks { get; set; }
-        public decimal SubcontractorAmount { get; set; }
-        public decimal EstimatedAmount { get; set; }
-        public List<EstimateItem> SubItems { get; set; }
-        public string ItemName { get; internal set; }
+        public string ItemName { get; internal set; } // 項目名
+        public decimal Amount { get; set; } // 数量
+        public string Unit { get; set; } // 単位
+        public decimal UnitPrice { get; set; } // 単価 
+        public string Remarks { get; set; } // 備考
+        public decimal SubcontractorAmount { get; set; } // 下請け業者金額
+        public decimal EstimatedAmount { get; set; } // 見積金額
+        public List<EstimateItem> SubItems { get; set; } // 下位アイテムリスト
+        public List<EstimateSubcontractor> Subcontractors { get; set; } // 下請け業者リスト
         public ConstructionProject Project { get; set; } // ConstructionProjectオブジェクトを保持するプロパティ
-        public string Description { get; set; }
+        public string Description { get; set; } // 説明
 
-        public EstimateItem(string name, string remarks, decimal unitPrice, decimal amount, DateTime startDate, DateTime endDate, decimal subcontractorAmount, decimal estimatedAmount, ConstructionProject project)
+        public EstimateItem(string name, DateTime startDate, DateTime endDate, string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
             : base(name, startDate, endDate)
         {
-            Remarks = remarks;
+            ItemName = itemName;
             UnitPrice = unitPrice;
             Amount = amount;
             SubcontractorAmount = subcontractorAmount;
             EstimatedAmount = estimatedAmount;
             SubItems = new List<EstimateItem>();
-            Project = project;
+            Subcontractors = new List<EstimateSubcontractor>();
+        }
+        public void AddSubItem(EstimateItem subItem)
+        {
+            SubItems.Add(subItem);
+        }
+
+        public void AddSubcontractor(EstimateSubcontractor subcontractor)
+        {
+            Subcontractors.Add(subcontractor);
+        }
+
+        public decimal GetTotalCost()
+        {
+            decimal total = SubcontractorAmount;
+            foreach (var subcontractor in Subcontractors)
+            {
+                total += subcontractor.GetTotalCost();
+            }
+            foreach (var item in SubItems)
+            {
+                total += item.GetTotalCost();
+            }
+            return total;
+        }
+        public decimal GetSubtotal()
+        {
+            decimal subtotal = UnitPrice * Amount;
+            foreach (var item in SubItems)
+            {
+                subtotal += item.GetSubtotal();
+            }
+            return subtotal;
         }
 
         public class EstimateSubcontractor
         {
-            public string Name { get; set; }
-            public decimal Amount { get; set; }
-            public string Unit { get; set; }
-            public decimal UnitPrice { get; set; }
-            public decimal SubcontractorAmount { get; set; }
-            public decimal EstimatedAmount { get; set; }
-            public List<EstimateSubcontractor> SubItems { get; set; }
+            public string ItemName { get; set; } // 項目名
+            public decimal Amount { get; set; } // 数量
+            public string Unit { get; set; } // 単位
+            public decimal UnitPrice { get; set; } // 単価 
+            public decimal SubcontractorAmount { get; set; } // 下請け業者金額
+            public decimal EstimatedAmount { get; set; } // 見積金額
+            public List<EstimateSubcontractor> SubItems { get; set; } // 下位アイテムリスト
 
 
-            public EstimateSubcontractor(string name, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
+            public EstimateSubcontractor(string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount)
             {
-                Name = name;
+                ItemName = itemName;
                 UnitPrice = unitPrice;
                 Amount = amount;
                 SubcontractorAmount = subcontractorAmount;
@@ -76,37 +109,42 @@ namespace MQuoteApp
                 var command = new SqlCommand();
                 command.Connection = connection;
                 command.CommandType = CommandType.Text;
-                command.CommandText = "INSERT INTO EstimateItems (Description, Quantity, UnitPrice, SubcontractorName) VALUES (@Description, @Quantity, @UnitPrice, @SubcontractorName)";
-                command.Parameters.AddWithValue("@Description", this.Description);
-                command.Parameters.AddWithValue("@Quantity", this.Quantity);
+                command.CommandText = "INSERT INTO EstimateItems (ItemName, Amount, Unit, UnitPrice, Remarks, SubcontractorAmount, EstimatedAmount, Project, Description) VALUES (@ItemName, @Amount, @Unit, @UnitPrice, @Remarks, @SubcontractorAmount, @EstimatedAmount, @Project, @Description); SELECT SCOPE_IDENTITY()";
+                command.Parameters.AddWithValue("@ItemName", this.ItemName);
+                command.Parameters.AddWithValue("@Amount", this.Amount);
+                command.Parameters.AddWithValue("@Unit", this.Unit);
                 command.Parameters.AddWithValue("@UnitPrice", this.UnitPrice);
-                command.Parameters.AddWithValue("@SubcontractorName", this.SubcontractorName);
+                command.Parameters.AddWithValue("@Remarks", this.Remarks);
+                command.Parameters.AddWithValue("@SubcontractorAmount", this.SubcontractorAmount);
+                command.Parameters.AddWithValue("@EstimatedAmount", this.EstimatedAmount);
+                command.Parameters.AddWithValue("@Project", this.Project);
+                command.Parameters.AddWithValue("@Description", this.Description);
                 connection.Open();
                 command.ExecuteNonQuery();
+
+                if (this.SubItems != null && this.SubItems.Count > 0)
+                {
+                    foreach (var subItem in this.SubItems)
+                    {
+                        var subCommand = new SqlCommand();
+                        subCommand.Connection = connection;
+                        subCommand.CommandType = CommandType.Text;
+                        subCommand.CommandText = "INSERT INTO EstimateSubcontractors (ItemName, Amount, Unit, UnitPrice, SubcontractorAmount, EstimatedAmount) VALUES (@ItemName, @Amount, @Unit, @UnitPrice, @SubcontractorAmount, @EstimatedAmount)";
+                        subCommand.Parameters.AddWithValue("@ItemName", subItem.ItemName);
+                        subCommand.Parameters.AddWithValue("@Amount", subItem.Amount);
+                        subCommand.Parameters.AddWithValue("@Unit", subItem.Unit);
+                        subCommand.Parameters.AddWithValue("@UnitPrice", subItem.UnitPrice);
+                        subCommand.Parameters.AddWithValue("@SubcontractorAmount", subItem.SubcontractorAmount);
+                        subCommand.Parameters.AddWithValue("@EstimatedAmount", subItem.EstimatedAmount);
+                        subCommand.ExecuteNonQuery();
+                    }
+                }
             }
         }
-        public void AddSubItem(EstimateItem subItem)
-        {
-            SubItems.Add(subItem);
-        }
-        public decimal GetSubtotal()
-        {
-            decimal subtotal = UnitPrice * Amount;
-            foreach (var item in SubItems)
-            {
-                subtotal += item.GetSubtotal();
-            }
-            return subtotal;
-        }
-        public decimal GetTotalCost()
-        {
-            decimal total = EstimatedAmount;
-            foreach (var item in SubItems)
-            {
-                total += item.GetTotalCost();
-            }
-            return total;
-        }
+
+
+
+
         public decimal CalculateSubcontractorAmount()
         {
             decimal subAmount = 0;
@@ -161,7 +199,7 @@ namespace MQuoteApp
             foreach (var item in items)
             {
                 // EstimateItemオブジェクトを生成する際に、関連するConstructionProjectオブジェクトを指定して生成する
-                Items.Add(new EstimateItem(item.Name, item.Amount, item.UnitPrice, item.StartDate, item.SubItems, this));
+                Items.Add(new EstimateItem(item.ItemName, item.Amount, item.UnitPrice, item.StartDate, item.SubItems, this));
             }
         }
 

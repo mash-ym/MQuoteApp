@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -8,6 +9,8 @@ namespace MQuoteApp
     public class Project : ProjectItem
     {
         public List<EstimateItem> EstimateItems { get; set; }
+        // プロジェクトに紐づく見積もりデータを保持するリスト
+        public List<EstimateItem> Estimates { get; set; }
         public List<Task> Tasks { get; set; }
         public Project(string name, DateTime startDate, DateTime endDate, List<EstimateItem> estimateItems, List<Task> tasks)
             :base(name, startDate ,endDate)
@@ -16,9 +19,30 @@ namespace MQuoteApp
             StartDate = startDate;
             EndDate = endDate;
             EstimateItems = estimateItems;
+            Estimates = new List<EstimateItem>();
             Tasks = tasks;
         }
+        // 見積もりデータをDataGridViewに表示するためのデータを取得する
+        public DataTable GetQuoteData()
+        {
+            // DataGridViewに表示するための空のテーブルを作成する
+            DataTable table = new DataTable();
+            table.Columns.Add("No", typeof(int));
+            table.Columns.Add("商品名", typeof(string));
+            table.Columns.Add("単価", typeof(int));
+            table.Columns.Add("数量", typeof(int));
+            table.Columns.Add("見積金額", typeof(int));
 
+            // Estimatesリストからデータを取り出し、テーブルに追加する
+            int i = 1;
+            foreach (EstimateItem item in Estimates)
+            {
+                table.Rows.Add(i, item.ItemName, item.UnitPrice, item.Amount, item.EstimatedAmount);
+                i++;
+            }
+
+            return table;
+        }
         public decimal GetTotalCost()
         {
             decimal total = 0;
