@@ -33,9 +33,9 @@ namespace MQuoteApp
             Projects = new List<Project>();
         }
 
-        public void AddRecord(string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
+        public void AddRecord(string name, string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
         {
-            Projects.Add(new Project(projectName, startDate, endDate, customer, estimateCreationDate, estimateExpirationDate, estimateItems, building));
+            Projects.Add(new Project(name, projectName, startDate, endDate, customer, estimateCreationDate, estimateExpirationDate, estimateItems, building));
         }
     }
 
@@ -58,9 +58,9 @@ namespace MQuoteApp
             Projects = new List<Project>();
 
         }
-        public void AddRecord(string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
+        public void AddRecord(string name, string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
         {
-            Projects.Add(new Project(projectName, startDate, endDate, customer, estimateCreationDate, estimateExpirationDate, estimateItems, building));
+            Projects.Add(new Project(name, projectName, startDate, endDate, customer, estimateCreationDate, estimateExpirationDate, estimateItems, building));
         }
 
     }
@@ -76,19 +76,20 @@ namespace MQuoteApp
         public Building Building { get; set; }
         public List<ConstructionRecord> Records { get; set; }
 
-        public Project(string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
-            : base(startDate, endDate)
+        public Project(string name, string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building) : base(startDate, endDate)
         {
+            Name = name;
             ProjectName = projectName;
             Customer = customer;
             EstimateCreationDate = estimateCreationDate;
             EstimateExpirationDate = estimateExpirationDate;
             StartDate = startDate;
             EndDate = endDate;
-            EstimateItems = new List<EstimateItem>();
+            EstimateItems = estimateItems;
             Building = building;
             Records = new List<ConstructionRecord>();
         }
+
 
         public void AddItem(EstimateItem item)
         {

@@ -84,7 +84,7 @@ namespace MQuoteApp
         private void NewProjectButton_Click(object sender, EventArgs e)
         {
             // 新しいプロジェクトを作成し、TreeViewに追加
-            var newProject = new Project("新しいプロジェクト");
+            var newProject = new Project("新しいプロジェクト", "新しいプロジェクト", DateTime.Now, DateTime.Now, null, DateTime.Now, DateTime.Now, new List<EstimateItem>(), null);
             var projectNode = new TreeNode(newProject.Name);
             projectNode.Tag = newProject;
             treeView1.Nodes.Add(projectNode);
@@ -105,28 +105,8 @@ namespace MQuoteApp
             }
         }
 
-        // ノードが選択されたときの処理
-        private void TreeView1_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            // 選択されたノードがProjectノードである場合
-            if (e.Node.Tag is Project)
-            {
-                // DataGridViewにそのProjectの見積データを表示
-                var project = (Project)e.Node.Tag;
-                ShowQuoteData(project.GetQuoteData);
-            }
-            // 選択されたノードがQuoteノードである場合
-            else if (e.Node.Tag is QuoteData)
-            {
-                // DataGridViewにその見積データを表示
-                var quote = (QuoteData)e.Node.Tag;
-                ShowQuoteData(new QuoteData[] { quote });
-            }
-        }
-        
-
-    // EstimateItemクラスからTreeNodeクラスに変換する
-    private TreeNode ConvertToTreeNode(EstimateItem item)
+        // EstimateItemクラスからTreeNodeクラスに変換する
+        private TreeNode ConvertToTreeNode(EstimateItem item)
         {
             TreeNode node = new TreeNode();
             node.Text = item.Name;
@@ -194,7 +174,7 @@ namespace MQuoteApp
                     {
                         sql += " OR ";
                     }
-                    sql += $"(ProjectName = '{quotes[i].ProjectName}' AND SubcontractorName = '{quotes[i].SubcontractorName}')";
+                    sql += $"(ProjectName = '{quotes[i].ProjectName}')";
                 }
                 sql += ";";
 
