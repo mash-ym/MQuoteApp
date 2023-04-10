@@ -1,9 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MQuoteApp
 {
@@ -12,7 +8,12 @@ namespace MQuoteApp
         public string ClientName { get; set; } // 見積書の顧客名を表すstring型のプロパティ
         public DateTime QuoteDate { get; set; } // 見積書の発行日を表すDateTime型のプロパティ
         public decimal TaxRate { get; set; } //見積書の消費税率を表すdecimal型のプロパティ
-        public List<EstimateItem> Items { get; set; } // 見積書の項目を表すEstimateItem型のリスト
+        public List<EstimateItem> Quotes { get; set; }
+
+        public Quote()
+        {
+            Quotes = new List<EstimateItem>();
+        }
         public List<Option> Options { get; set; } // 見積書のオプションを表すOption型のリスト
         public decimal Discount { get; set; } // 値引きの割合（％）
         public class Option
@@ -26,7 +27,7 @@ namespace MQuoteApp
             ClientName = clientName;
             QuoteDate = quoteDate;
             TaxRate = taxRate;
-            Items = new List<EstimateItem>();
+            Quotes = new List<EstimateItem>();
             Options = new List<Option>();
             Discount = 0;
         }
@@ -35,7 +36,7 @@ namespace MQuoteApp
         public virtual decimal CalculateTotal()
         {
             decimal subtotal = 0;
-            foreach (var item in Items)
+            foreach (var item in Quotes)
             {
                 subtotal += item.GetTotalCost();
             }
@@ -54,14 +55,14 @@ namespace MQuoteApp
         // 見積書に項目を追加するvoid型のメソッド
         public void AddItem(EstimateItem item)
         {
-            Items.Add(item);
+            Quotes.Add(item);
         }
         public decimal GetSubtotal()
         {
             decimal subtotal = 0;
 
             // 見積もりの項目の金額を加算
-            foreach (EstimateItem item in Items)
+            foreach (EstimateItem item in Quotes)
             {
                 subtotal += item.GetTotalCost();
             }

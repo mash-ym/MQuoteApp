@@ -121,11 +121,9 @@
     <Compile Include="ProjectSchedule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quote.cs" />
-    <Compile Include="QuoteData.cs" />
     <Compile Include="QuoteDGV.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Task.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

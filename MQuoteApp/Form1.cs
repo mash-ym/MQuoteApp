@@ -12,17 +12,16 @@ namespace MQuoteApp
         // データベースファイルのパス
         private const string dbFilePath = @"C:\path\to\database.db";
         TreeView treeView1 = new TreeView();
-
         private Quote quote = new Quote(); // Quoteクラスのインスタンスを保持する
         private QuoteDGV quoteDGV; // QuoteDGVクラスのインスタンスを保持する
+        private Project Project; // Projectクラスのインスタンスを保持する
 
         public MainForm()
         {
             InitializeComponent();
             // QuoteDGVクラスのオブジェクトを作成する。
-            quoteDGV = new QuoteDGV();
-            quoteDGV.Update();
             quoteDGV = new QuoteDGV(quote); // QuoteDGVインスタンスを生成する
+            quoteDGV.Update(); // QuoteDGVのデータを更新する
 
             // 新しいコンテキストメニューを作成する
             ContextMenuStrip contextMenuStrip1 = new ContextMenuStrip();
@@ -177,7 +176,7 @@ namespace MQuoteApp
 
 
         // DataGridViewに見積データを表示するメソッド
-        private void ShowQuoteData(QuoteData[] quotes)
+        private void ShowQuoteData(Project[] quotes)
         {
             // 接続文字列
             string connectionString = $"Data Source={dbFilePath}";

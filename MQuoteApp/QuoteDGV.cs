@@ -11,6 +11,22 @@ namespace MQuoteApp
         public QuoteDGV()
         {
             AllowDrop = true;
+
+        }
+        private Quote quote; // Quoteクラスのインスタンスを保持する
+
+        public QuoteDGV(Quote quote)
+        {
+            this.quote = quote;
+        }
+
+        public void Update()
+        {
+            // データソースを設定
+            DataSource = quote.Quotes;
+
+            // DataGridViewの見た目を調整する
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
