@@ -26,9 +26,9 @@ namespace MQuoteApp
             // 新しいコンテキストメニューを作成する
             ContextMenuStrip contextMenuStrip1 = new ContextMenuStrip();
             // 新しいメニュー項目を作成する
-            ToolStripMenuItem menuItem1 = new ToolStripMenuItem();
-            menuItem1.Text = "Copy";
-            menuItem1.Click += new EventHandler(copyToolStripMenuItem_Click);
+            ToolStripMenuItem 貼付ToolStripMenuItem_Click = new ToolStripMenuItem();
+            貼付ToolStripMenuItem_Click.Text = "コピー";
+            貼付ToolStripMenuItem_Click.Click += new EventHandler(copyToolStripMenuItem_Click);
 
             ToolStripMenuItem menuItem2 = new ToolStripMenuItem();
             menuItem2.Text = "Delete";
@@ -38,16 +38,23 @@ namespace MQuoteApp
             menuItem3.Click += new EventHandler(pasteToolStripMenuItem_Click);
 
             // コンテキストメニューにメニュー項目を追加する
-            contextMenuStrip1.Items.Add(menuItem1);
+            contextMenuStrip1.Items.Add(貼付ToolStripMenuItem_Click);
             contextMenuStrip1.Items.Add(menuItem2);
             contextMenuStrip1.Items.Add(menuItem3);
             // 削除メニュー項目がクリックされたときの処理
 
             // TreeViewのContextMenuStripプロパティに新しいコンテキストメニューを割り当てる
             treeView1.ContextMenuStrip = contextMenuStrip1;
+            listView1.Items.Add(Fonts.fa.amazon);
+            listView1.Items.Add(Fonts.fa.google);
+            listView1.Items.Add(Fonts.fa.github_square);
+            listView1.Items.Add(Fonts.fa.hotel);
+            listView1.Items.Add(Fonts.fa.microphone);
+            listView1.Items.Add(Fonts.fa.motorcycle);
+            listView1.Items.Add(Fonts.fa.object_group);
 
         }
-      
+
         private void delete_Click(object sender, EventArgs e)
         {
             if (treeView1.SelectedNode != null)
@@ -199,6 +206,15 @@ namespace MQuoteApp
 
         }
 
-        
+        private void ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void 新規作成NToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
     }
 }
