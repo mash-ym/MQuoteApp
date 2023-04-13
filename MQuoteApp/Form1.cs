@@ -15,10 +15,13 @@ namespace MQuoteApp
         private Quote quote = new Quote(); // Quoteクラスのインスタンスを保持する
         private QuoteDGV quoteDGV; // QuoteDGVクラスのインスタンスを保持する
         private Project Project; // Projectクラスのインスタンスを保持する
-
+        private bool mouseDown; // マウスが押されているかどうかを示すフラグ
+        private Point lastLocation; // フォームの前回の位置を示す変数
         public MainForm()
         {
             InitializeComponent();
+            
+
             // QuoteDGVクラスのオブジェクトを作成する。
             quoteDGV = new QuoteDGV(quote); // QuoteDGVインスタンスを生成する
             quoteDGV.Update(); // QuoteDGVのデータを更新する
@@ -45,15 +48,27 @@ namespace MQuoteApp
 
             // TreeViewのContextMenuStripプロパティに新しいコンテキストメニューを割り当てる
             treeView1.ContextMenuStrip = contextMenuStrip1;
-            listView1.Items.Add(Fonts.fa.amazon);
-            listView1.Items.Add(Fonts.fa.google);
-            listView1.Items.Add(Fonts.fa.github_square);
-            listView1.Items.Add(Fonts.fa.hotel);
-            listView1.Items.Add(Fonts.fa.microphone);
-            listView1.Items.Add(Fonts.fa.motorcycle);
-            listView1.Items.Add(Fonts.fa.object_group);
+
+            //アイコンの設定
+            
+            //minimizeButton.Font = fontAwesomeFont;
+            //minimizeButton.Text = "\uf2d1"; // 縮小のアイコン
+            //maximizeButton.Font = fontAwesomeFont;
+            //maximizeButton.Text = "\uf0c8"; // 拡大のアイコン
+            //closeButton.Font = fontAwesomeFont;
+            //closeButton.Text = "\uf00d"; // 閉じるのアイコン
+            //label1.Font = fontAwesomeFont;
+
+            // ラベルにFontAwesomeのアイコンを設定
+            //label1.Text = "\uf007";
+
+
+            //MouseDown += MainForm_MouseDown;
+            //MouseMove += MainForm_MouseMove;
+            //MouseUp += MainForm_MouseUp;
 
         }
+        private static Font fontAwesomeFont = new Font(new FontFamily("FontAwesome"), 24, FontStyle.Regular, GraphicsUnit.Point);
 
         private void delete_Click(object sender, EventArgs e)
         {
@@ -205,16 +220,50 @@ namespace MQuoteApp
         {
 
         }
+        //private void MainForm_MouseDown(object sender, MouseEventArgs e)
+        //{
+            //mouseDown = true;
+            //lastLocation = e.Location;
+        //}
 
-        private void ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
+        //private void MainForm_MouseMove(object sender, MouseEventArgs e)
+        //{
+            //if (mouseDown)
+            //{
+                //this.Location = new Point(
+                    //(this.Location.X - lastLocation.X) + e.X, (this.Location.Y - lastLocation.Y) + e.Y);
+                //this.Update();
+            //}
+        //}
 
-        }
+        //private void MainForm_MouseUp(object sender, MouseEventArgs e)
+        //{
+           // mouseDown = false;
+        //}
 
-        private void 新規作成NToolStripMenuItem_Click(object sender, EventArgs e)
-        {
+        //フォームの縮小
+        //private void minimizeButton_Click(object sender, EventArgs e)
+        //{
+            //WindowState = FormWindowState.Minimized;
+        //}
+    
+        //private void maximizeButton_Click(object sender, EventArgs e)
+        //{
+            //if (this.WindowState == FormWindowState.Maximized)
+            //{
+                //this.WindowState = FormWindowState.Normal;
+            //}
+            //else
+            //{
+                //this.WindowState = FormWindowState.Maximized;
+            //}
+        //}
 
-        }
+        //private void closeButton_Click(object sender, EventArgs e)
+        //{
+            //Close();
+        //}
 
+        
     }
 }

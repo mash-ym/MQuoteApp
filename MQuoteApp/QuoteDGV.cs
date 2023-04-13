@@ -7,7 +7,7 @@ namespace MQuoteApp
     public class QuoteDGV : DataGridView
     {
         private int _draggedIndex;
-
+        
         public QuoteDGV()
         {
             AllowDrop = true;
