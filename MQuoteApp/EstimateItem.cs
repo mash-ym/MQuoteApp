@@ -19,11 +19,10 @@ namespace MQuoteApp
         public decimal EstimatedAmount { get; set; } // 見積金額
         public List<EstimateItem> SubItems { get; set; } // 下位アイテムリスト
         public List<EstimateSubcontractor> Subcontractors { get; set; } // 下請け業者リスト
+        public List<EstimateItem> Dependencies { get; set; }
         public string Description { get; set; } // 説明
-        
-
-        public EstimateItem(string name, DateTime startDate, DateTime finishDate, string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, int? duration)
-            : base(name, startDate, finishDate, duration)
+        public EstimateItem(string name, DateTime startDate, DateTime finishDate, string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, int? duration, TimeSpan period, List<EstimateItem> dependencies)
+            : base(name, startDate, finishDate, duration, period)
         {
             ItemName = itemName;
             UnitPrice = unitPrice;
@@ -35,6 +34,8 @@ namespace MQuoteApp
             StartDate = startDate;
             FinishDate = finishDate;
             Duration = duration;
+            period = period;
+            Dependencies = dependencies;
         }
         public void AddSubItem(EstimateItem subItem)
         {

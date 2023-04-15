@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 
 namespace MQuoteApp
 {
@@ -16,6 +17,31 @@ namespace MQuoteApp
                     CalculateFinishDate(childItem);
                 }
             }
+        }
+        public void DrawGraphWithPeriods()
+        {
+            var graph = new Graph();
+
+            // ノードの追加
+            foreach (var item in _items)
+            {
+                var node = graph.AddNode(item.Name);
+                node.Attr.Label = $"{item.Name}\n({item.Period.TotalDays} days)"; // 工事期間を表示する
+            }
+
+            // エッジの追加
+            foreach (var item in _items)
+            {
+                foreach (var dep in item.Dependencies)
+                {
+                    var edge = graph.AddItemEdge(item.Name, dep.Name);
+                }
+            }
+
+            var renderer = new Microsoft.Msagl.GraphViewerGdi.GraphRenderer(graph);
+            var image = new Bitmap(1, 1);
+            renderer.Render(image);
+            Image = image;
         }
 
         public void AddDependency(EstimateItem from, EstimateItem to)

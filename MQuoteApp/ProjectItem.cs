@@ -11,13 +11,15 @@ namespace MQuoteApp
         public List<ProjectItem> SubItems { get; set; }
         public int WorkingDays => GetWorkingDays();
         public int? Duration { get; set; } // 工事期間（日数
+        public TimeSpan Period { get; set; } // 追加
 
-        protected ProjectItem(string name, DateTime startDate, DateTime finishDate, int? duration)
+        protected ProjectItem(string name, DateTime startDate, DateTime finishDate, int? duration, TimeSpan period)
         {
             Name = name;
             StartDate = startDate;
             FinishDate = finishDate;
             Duration = duration;
+            Period = period;
         }
 
         protected ProjectItem(DateTime startDate, DateTime finishDate)
