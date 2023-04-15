@@ -7,9 +7,9 @@ namespace MQuoteApp
         private Dictionary<EstimateItem, List<EstimateItem>> _graph = new Dictionary<EstimateItem, List<EstimateItem>>();
         private void CalculateFinishDate(EstimateItem item)
         {
-            if (item.StartDate.HasValue && item.Duration.HasValue)
+            if (item.StartDate != null && item.Duration.HasValue)
             {
-                item.FinishDate = item.StartDate.Value.AddDays(item.Duration.Value);
+                item.FinishDate = item.StartDate.HasValue.AddDays(item.Duration.Value);
                 // 子ノードの終了日を再帰的に計算
                 foreach (var childItem in item.SubItems
                     )
