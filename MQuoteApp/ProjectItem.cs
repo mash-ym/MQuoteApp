@@ -7,28 +7,30 @@ namespace MQuoteApp
     {
         public string Name { get; set; }
         public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTime FinishDate { get; set; }
         public List<ProjectItem> SubItems { get; set; }
         public int WorkingDays => GetWorkingDays();
+        public int? Duration { get; set; } // 工事期間（日数
 
-        protected ProjectItem(string name, DateTime startDate, DateTime endDate)
+        protected ProjectItem(string name, DateTime startDate, DateTime finishDate, int? duration)
         {
             Name = name;
             StartDate = startDate;
-            EndDate = endDate;
+            FinishDate = finishDate;
+            Duration = duration;
         }
 
-        protected ProjectItem(DateTime startDate, DateTime endDate)
+        protected ProjectItem(DateTime startDate, DateTime finishDate)
         {
             StartDate = startDate;
-            EndDate = endDate;
+            FinishDate = finishDate;
         }
 
         protected int GetWorkingDays()
         {
             int days = 0;
-            DateTime currentDay = StartDate;
-            while (currentDay <= EndDate)
+            DateTime currentDay = (DateTime)StartDate;
+            while (currentDay <= FinishDate)
             {
                 if (currentDay.DayOfWeek != DayOfWeek.Saturday && currentDay.DayOfWeek != DayOfWeek.Sunday)
                 {

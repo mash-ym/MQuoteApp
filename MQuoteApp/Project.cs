@@ -75,8 +75,10 @@ namespace MQuoteApp
         public DateTime EstimateExpirationDate { get; set; }
         public Building Building { get; set; }
         public List<ConstructionRecord> Records { get; set; }
+        public ProjectSchedule ProjectSchedule { get; set; } // 工期管理の追加
 
-        public Project(string name, string projectName, DateTime startDate, DateTime endDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building) : base(startDate, endDate)
+        public Project(string name, string projectName, DateTime startDate, DateTime finishDate, CustomerInfo customer, DateTime estimateCreationDate, DateTime estimateExpirationDate, List<EstimateItem> estimateItems, Building building)
+            : base(startDate, finishDate)
         {
             Name = name;
             ProjectName = projectName;
@@ -84,7 +86,7 @@ namespace MQuoteApp
             EstimateCreationDate = estimateCreationDate;
             EstimateExpirationDate = estimateExpirationDate;
             StartDate = startDate;
-            EndDate = endDate;
+            FinishDate = finishDate;
             EstimateItems = estimateItems;
             Building = building;
             Records = new List<ConstructionRecord>();
@@ -134,7 +136,7 @@ namespace MQuoteApp
         {
             int days = 0;
             DateTime currentDay = StartDate;
-            while (currentDay <= EndDate)
+            while (currentDay <= FinishDate)
             {
                 if (currentDay.DayOfWeek != DayOfWeek.Saturday && currentDay.DayOfWeek != DayOfWeek.Sunday)
                 {
@@ -180,14 +182,14 @@ namespace MQuoteApp
 
         private int GetDuration()
         {
-            return GetWorkingDays(StartDate, EndDate);
+            return GetWorkingDays(StartDate, FinishDate);
         }
 
-        private int GetWorkingDays(DateTime startDate, DateTime endDate)
+        private int GetWorkingDays(DateTime startDate, DateTime finishDate)
         {
             int days = 0;
             DateTime currentDay = startDate;
-            while (currentDay <= endDate)
+            while (currentDay <= finishDate)
             {
                 if (currentDay.DayOfWeek != DayOfWeek.Saturday && currentDay.DayOfWeek != DayOfWeek.Sunday)
                 {
@@ -229,7 +231,7 @@ namespace MQuoteApp
 
                                 command.Parameters.AddWithValue("@ProjectName", project.ProjectName);
                                 command.Parameters.AddWithValue("@CreatedAt", project.StartDate);
-                                command.Parameters.AddWithValue("@ValidUntil", project.EndDate);
+                                command.Parameters.AddWithValue("@ValidUntil", project.FinishDate);
                                 command.Parameters.AddWithValue("@CustomerName", project.Customer.Name);
                                 command.Parameters.AddWithValue("@CustomerAddress", project.Customer.Address);
                                 command.Parameters.AddWithValue("@BuildingAddress", project.Building.Address);
