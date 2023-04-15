@@ -130,7 +130,7 @@ namespace MQuoteApp
 
             if (FinishDate > StartDate)
             {
-                int itemDuration = (FinishDate - StartDate).days;
+                int itemDuration = (FinishDate - StartDate).Days;
                 if (itemDuration > duration)
                 {
                     duration = itemDuration;

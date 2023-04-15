@@ -9,17 +9,14 @@ namespace MQuoteApp
         {
             if (item.StartDate != null && item.Duration.HasValue)
             {
-                item.FinishDate = item.StartDate.HasValue.AddDays(item.Duration.Value);
+                item.FinishDate = item.StartDate.AddDays(item.Duration.Value);
                 // 子ノードの終了日を再帰的に計算
-                foreach (var childItem in item.SubItems
-                    )
+                foreach (var childItem in item.SubItems)
                 {
                     CalculateFinishDate(childItem);
                 }
             }
         }
-
-
 
         public void AddDependency(EstimateItem from, EstimateItem to)
         {
