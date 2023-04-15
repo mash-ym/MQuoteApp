@@ -10,6 +10,7 @@ namespace MQuoteApp
 
     public class EstimateItem : ProjectItem
     {
+        public string Id { get; set; }// ID
         public string ItemName { get; internal set; } // 項目名
         public decimal Amount { get; set; } // 数量
         public string Unit { get; set; } // 単位
@@ -21,9 +22,10 @@ namespace MQuoteApp
         public List<EstimateSubcontractor> Subcontractors { get; set; } // 下請け業者リスト
         public List<EstimateItem> Dependencies { get; set; }
         public string Description { get; set; } // 説明
-        public EstimateItem(string name, DateTime startDate, DateTime finishDate, string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, int? duration, TimeSpan period, List<EstimateItem> dependencies)
+        public EstimateItem(string id, string name, DateTime startDate, DateTime finishDate, string itemName, decimal unitPrice, decimal amount, decimal subcontractorAmount, decimal estimatedAmount, int? duration, TimeSpan period, List<EstimateItem> dependencies)
             : base(name, startDate, finishDate, duration, period)
         {
+            Id = id;
             ItemName = itemName;
             UnitPrice = unitPrice;
             Amount = amount;
@@ -37,6 +39,35 @@ namespace MQuoteApp
             period = period;
             Dependencies = dependencies;
         }
+        public DateTime CalculateEndDate()
+        {
+            if (Dependencies.Count == 0)
+            {
+                // 依存関係がない場合は自身の開始日を終了日とする
+                return StartDate;
+            }
+
+            // 依存関係がある場合は、最大の終了日を計算する
+            DateTime maxEndDate = DateTime.MinValue;
+            foreach (var dependency in Dependencies)
+            {
+                var dependencyEndDate = dependency.CalculateEndDate();
+                if (dependencyEndDate > maxEndDate)
+                {
+                    maxEndDate = dependencyEndDate;
+                }
+            }
+
+            // 自身の終了日を計算する
+            var duration = Duration ?? 0; // 見積もり工数が設定されていない場合は0とする
+            var endDate = maxEndDate.AddDays(duration);
+
+            // 終了日を更新する
+            FinishDate = endDate;
+
+            return endDate;
+        }
+
         public void AddSubItem(EstimateItem subItem)
         {
             SubItems.Add(subItem);
@@ -139,6 +170,10 @@ namespace MQuoteApp
             }
 
             return duration;
+        }
+        public DateTime GetEndDate(DateTime startDate, int duration)
+        {
+            return startDate.AddDays(duration);
         }
     }
 }

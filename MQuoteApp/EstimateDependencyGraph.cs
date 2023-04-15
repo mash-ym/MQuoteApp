@@ -1,140 +1,175 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MQuoteApp
 {
     public class EstimateDependencyGraph
     {
-        private Dictionary<EstimateItem, List<EstimateItem>> _graph = new Dictionary<EstimateItem, List<EstimateItem>>();
-        private void CalculateFinishDate(EstimateItem item)
+        private List<EstimateItem> _nodes;
+        private Dictionary<EstimateItem, List<EstimateItem>> _edges;
+
+        public EstimateDependencyGraph()
         {
-            if (item.StartDate != null && item.Duration.HasValue)
+            _nodes = new List<EstimateItem>();
+            _edges = new Dictionary<EstimateItem, List<EstimateItem>>();
+        }
+
+        public void AddNode(EstimateItem node)
+        {
+            if (!_nodes.Contains(node))
             {
-                item.FinishDate = item.StartDate.AddDays(item.Duration.Value);
-                // 子ノードの終了日を再帰的に計算
-                foreach (var childItem in item.SubItems)
-                {
-                    CalculateFinishDate(childItem);
-                }
+                _nodes.Add(node);
+                _edges[node] = new List<EstimateItem>();
             }
         }
-        public void DrawGraphWithPeriods()
-        {
-            var graph = new Graph();
 
-            // ノードの追加
-            foreach (var item in _items)
+        public void AddEdge(EstimateItem from, EstimateItem to)
+        {
+            if (!_nodes.Contains(from))
             {
-                var node = graph.AddNode(item.Name);
-                node.Attr.Label = $"{item.Name}\n({item.Period.TotalDays} days)"; // 工事期間を表示する
+                AddNode(from);
+            }
+            if (!_nodes.Contains(to))
+            {
+                AddNode(to);
+            }
+            if (!_edges[from].Contains(to))
+            {
+                _edges[from].Add(to);
+            }
+        }
+
+        public bool HasCircularDependency()
+        {
+            HashSet<EstimateItem> visited = new HashSet<EstimateItem>();
+            HashSet<EstimateItem> recursionStack = new HashSet<EstimateItem>();
+
+            foreach (EstimateItem node in _nodes)
+            {
+                if (HasCircularDependencyRecursive(node, visited, recursionStack))
+                {
+                    return true;
+                }
             }
 
-            // エッジの追加
-            foreach (var item in _items)
+            return false;
+        }
+
+        private bool HasCircularDependencyRecursive(EstimateItem node, HashSet<EstimateItem> visited, HashSet<EstimateItem> recursionStack)
+        {
+            if (!visited.Contains(node))
+            {
+                visited.Add(node);
+                recursionStack.Add(node);
+
+                foreach (EstimateItem child in _edges[node])
+                {
+                    if (!visited.Contains(child) && HasCircularDependencyRecursive(child, visited, recursionStack))
+                    {
+                        return true;
+                    }
+                    else if (recursionStack.Contains(child))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            recursionStack.Remove(node);
+            return false;
+        }
+
+        public void RemoveEdge(EstimateItem from, EstimateItem to)
+        {
+            if (_edges.ContainsKey(from))
+            {
+                _edges[from].Remove(to);
+            }
+        }
+
+        public List<EstimateItem> GetNodes()
+        {
+            return _nodes;
+        }
+
+        public List<EstimateItem> GetChildren(EstimateItem node)
+        {
+            if (_edges.ContainsKey(node))
+            {
+                return _edges[node];
+            }
+            else
+            {
+                return new List<EstimateItem>();
+            }
+        }
+
+        public void Visit(Action<EstimateItem> visitor)
+        {
+            HashSet<EstimateItem> visited = new HashSet<EstimateItem>();
+            foreach (EstimateItem node in _nodes)
+            {
+                VisitRecursive(node, visited, visitor);
+            }
+        }
+
+        private void VisitRecursive(EstimateItem node, HashSet<EstimateItem> visited, Action<EstimateItem> visitor)
+        {
+            if (!visited.Contains(node))
+            {
+                visited.Add(node);
+
+                foreach (EstimateItem child in _edges[node])
+                {
+                    VisitRecursive(child, visited, visitor);
+                }
+
+                visitor(node);
+            }
+        }
+
+        public void DrawGraphWithPeriods()
+        {
+            // Create a new Graphviz graph
+            var graph = new Graphviz.Graph("Estimate Dependency Graph");
+
+            // Add nodes to the graph
+            foreach (var item in Items)
+            {
+                var node = graph.Nodes.Add(item.Name);
+                node.Label = $"{item.Name} ({item.Duration} days)";
+
+                // Set the node style based on the item status
+                if (item.Status == ItemStatus.InProgress)
+                {
+                    node.Style.FillColor = Graphviz.Color.LightBlue;
+                }
+                else if (item.Status == ItemStatus.Completed)
+                {
+                    node.Style.FillColor = Graphviz.Color.LightGreen;
+                }
+                else
+                {
+                    node.Style.FillColor = Graphviz.Color.White;
+                }
+            }
+
+            // Add edges to the graph
+            foreach (var item in Items)
             {
                 foreach (var dep in item.Dependencies)
                 {
-                    var edge = graph.AddItemEdge(item.Name, dep.Name);
+                    var edge = graph.Edges.Add(item.Name, dep.Name);
+                    edge.Label = $"{dep.Name} -> {item.Name}";
                 }
             }
 
-            var renderer = new Microsoft.Msagl.GraphViewerGdi.GraphRenderer(graph);
-            var image = new Bitmap(1, 1);
-            renderer.Render(image);
-            Image = image;
+            // Output the graph in DOT format
+            var dot = graph.Compile();
+            Console.WriteLine(dot);
+
+            // Output the graph in PNG format
+            graph.RenderToFile("EstimateDependencyGraph.png");
         }
-
-        public void AddDependency(EstimateItem from, EstimateItem to)
-        {
-            if (!_graph.ContainsKey(from))
-            {
-                _graph[from] = new List<EstimateItem>();
-            }
-            _graph[from].Add(to);
-        }
-
-        public void RemoveDependency(EstimateItem from, EstimateItem to)
-        {
-            if (_graph.ContainsKey(from))
-            {
-                _graph[from].Remove(to);
-            }
-        }
-
-        public List<EstimateItem> GetDependencies(EstimateItem from)
-        {
-            if (_graph.ContainsKey(from))
-            {
-                return _graph[from];
-            }
-            return new List<EstimateItem>();
-        }
-
-        public List<EstimateItem> GetDependents(EstimateItem to)
-        {
-            List<EstimateItem> dependents = new List<EstimateItem>();
-            foreach (EstimateItem from in _graph.Keys)
-            {
-                if (_graph[from].Contains(to))
-                {
-                    dependents.Add(from);
-                }
-            }
-            return dependents;
-        }
-
-        public void Clear()
-        {
-            _graph.Clear();
-        }
-
-        public List<EstimateItem> TopologicalSort()
-        {
-            Dictionary<EstimateItem, int> indegrees = new Dictionary<EstimateItem, int>();
-            foreach (EstimateItem from in _graph.Keys)
-            {
-                indegrees[from] = 0;
-            }
-            foreach (EstimateItem from in _graph.Keys)
-            {
-                foreach (EstimateItem to in _graph[from])
-                {
-                    if (!indegrees.ContainsKey(to))
-                    {
-                        indegrees[to] = 0;
-                    }
-                    indegrees[to]++;
-                }
-            }
-
-            List<EstimateItem> sortedItems = new List<EstimateItem>();
-            Queue<EstimateItem> queue = new Queue<EstimateItem>();
-            foreach (EstimateItem item in indegrees.Keys)
-            {
-                if (indegrees[item] == 0)
-                {
-                    queue.Enqueue(item);
-                }
-            }
-            while (queue.Count > 0)
-            {
-                EstimateItem item = queue.Dequeue();
-                sortedItems.Add(item);
-                foreach (EstimateItem to in _graph[item])
-                {
-                    indegrees[to]--;
-                    if (indegrees[to] == 0)
-                    {
-                        queue.Enqueue(to);
-                    }
-                }
-            }
-
-            return sortedItems;
-        }
-    } 
+    }
 }
-
-
-
-
