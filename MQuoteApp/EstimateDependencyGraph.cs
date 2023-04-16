@@ -245,8 +245,7 @@ namespace MQuoteApp
         }
         private EstimateItem GetEstimateItem(int id)
         {
-            var result = _items.FirstOrDefault(x => x.Id.ToString() == id);
-            return result;
+            return Items.FirstOrDefault(item => item.Id == id);
         }
 
 
@@ -362,6 +361,22 @@ namespace MQuoteApp
 
             // ノードの深さを設定する
             SetDepth(item, depth);
+
+            // 依存するノードの終了日を再帰的に計算する
+            foreach (var dependency in item.Dependencies)
+            {
+                var dependencyItem = GetEstimateItem(dependency.Id);
+                if (dependencyItem == null) continue;
+
+                Traverse(dependencyItem, depth + 1);
+
+                // 依存するノードの中で終了日が最大のものを採用する
+                if (dependencyItem.FinishDate.HasValue && (!item.FinishDate.HasValue || item.FinishDate.Value < dependencyItem.EndDate.Value))
+                {
+                    item.FinishDate = dependencyItem.FinishDate.Value;
+                }
+            }
+
         }
         private List<EstimateItem> GetRootNodes()
         {
@@ -388,25 +403,22 @@ namespace MQuoteApp
         private void SetDepth(EstimateItem item, int depth)
         {
             item.Depth = depth;
-            if (item.Parent == null)
-            {
-                return;
-            }
-
-            SetDepth(item.Parent, depth + 1);
         }
-        private void CalculateEndDates()
+
+        public void CalculateEndDates()
         {
-            // ルートノードを取得する
+            // ルートノードから深さ優先探索をして、各ノードの終了日を計算する
             var rootNodes = GetRootNodes();
             foreach (var rootNode in rootNodes)
             {
-                // ルートノードからの深さを0に設定する
                 SetDepth(rootNode, 0);
-                // DFSでノードを走査する
                 Traverse(rootNode, 0);
             }
+
+            // すべてのItemに対してCalculateEndDateメソッドを呼び出す
+            Items.ForEach(item => CalculateEndDate(item));
         }
+
 
     }
 }
