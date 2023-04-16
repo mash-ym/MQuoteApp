@@ -12,12 +12,11 @@ namespace MQuoteApp
         private readonly Dictionary<EstimateItem, HashSet<EstimateItem>> _adjacencyList;
         private readonly Dictionary<EstimateItem, int> _inDegree;
         private List<EstimateItem> Items { get; set; }
-        public List<EstimateDependency> Dependencies { get; set; }
         private readonly Dictionary<int, List<EstimateItem>> _dependencies;
         private readonly Dictionary<int, EstimateItem> _items;
 
 
-        public EstimateDependencyGraph(List<EstimateItem> items, List<EstimateDependency> dependencies)
+        public EstimateDependencyGraph(List<EstimateItem> items)
         {
             Items = items ?? throw new ArgumentNullException(nameof(items));
             Dependencies = dependencies;
@@ -31,34 +30,11 @@ namespace MQuoteApp
                 AddNode(item);
             }
         }
-        public void EstimateDependency()
+        public bool EstimateDependency(EstimateItem item1, EstimateItem item2)
         {
-            // Calculate start and end dates for all items in the graph
-            CalculateEndDate();
-
-            // Calculate dependencies for all items in the graph
-            foreach (var item in Items)
-            {
-                // Get all dependencies for this item
-                var dependencies = Dependencies.Where(d => d.ToItemId == item.Id).ToList();
-
-                // Sort dependencies by start date in ascending order
-                dependencies.Sort((d1, d2) => GetEstimateItem(d1.FromItemId).StartDate.CompareTo(GetEstimateItem(d2.FromItemId).StartDate));
-
-                // Set the dependencies for the item
-                EstimateItem item;
-                if (!Items.TryGetValue(id, out item))
-                {
-                    item = new EstimateItem(id, name);
-                    Items.Add(id, item);
-                }
-
-                if (item == null) return;
-
-                item.Dependencies = dependencies;
-
-            }
+            return item2.Dependencies.Contains(item1);
         }
+
 
         public void AddNode(EstimateItem node)
         {
