@@ -11,13 +11,16 @@ namespace MQuoteApp
         private Dictionary<EstimateItem, List<EstimateItem>> _dependencies;
         private readonly Dictionary<EstimateItem, HashSet<EstimateItem>> _adjacencyList;
         private readonly Dictionary<EstimateItem, int> _inDegree;
-        private readonly List<EstimateItem> Items;
+        private List<EstimateItem> Items { get; set; }
+        public List<EstimateDependency> Dependencies { get; set; }
         private readonly Dictionary<int, List<EstimateItem>> _dependencies;
         private readonly Dictionary<int, EstimateItem> _items;
 
 
         public EstimateDependencyGraph(List<EstimateItem> items, List<EstimateDependency> dependencies)
         {
+            Items = items ?? throw new ArgumentNullException(nameof(items));
+            Dependencies = dependencies;
             _items = items.ToDictionary(i => i.Id, i => i);
             _dependencies = dependencies.GroupBy(d => d.ToItemId)
                 .ToDictionary(g => g.Key, g => g.Select(d => _items[d.FromItemId]).ToList());
@@ -101,9 +104,13 @@ namespace MQuoteApp
                 _dependencies[item].Add(dependentItem);
             }
         }
-        public Dictionary<EstimateItem, List<EstimateItem>> GetDependencies()
+        // 依存するノードのリストを取得する
+        private List<EstimateDependency> GetDependencies(EstimateItem item)
         {
-            return _dependencies;
+            return Items
+                .Where(x => x.Id != item.Id && x.Dependencies.Any(y => y.Id == item.Id))
+                .Select(x => new EstimateDependency(x.Id, x.Title))
+                .ToList();
         }
 
         public bool HasCircularDependency()
@@ -328,24 +335,6 @@ namespace MQuoteApp
             graph.RenderToFile("EstimateDependencyGraph.png");
         }
 
-        public void CalculateEndDate()
-        {
-            // ルートノードを取得する
-            var rootNodes = GetRootNodes();
-            foreach (var rootNode in rootNodes)
-            {
-                // ルートノードからの深さを0に設定する
-                SetDepth(rootNode, 0);
-                // DFSでノードを走査する
-                Traverse(rootNode, 0);
-            }
-            // グラフを走査して終了日を計算する
-            TraverseGraph();
-
-            // グラフを走査してクリティカルパスを計算する
-            CalculateCriticalPath();
-            // DFSでノードを走査する
-        }
         // DFSでノードを走査する
         private void Traverse(EstimateItem item, int depth)
         {
@@ -376,9 +365,48 @@ namespace MQuoteApp
         }
         private List<EstimateItem> GetRootNodes()
         {
-            return Items.Where(item => !Dependencies.Any(d => d.Id == item.Id)).ToList();
+            List<EstimateItem> rootNodes = new List<EstimateItem>();
+            foreach (var item in Items)
+            {
+                bool isRoot = true;
+                foreach (var dependency in Dependencies)
+                {
+                    if (dependency.ToId == item.Id)
+                    {
+                        isRoot = false;
+                        break;
+                    }
+                }
+                if (isRoot)
+                {
+                    rootNodes.Add(item);
+                }
+            }
+            return rootNodes;
         }
+        // 深さを設定する
+        private void SetDepth(EstimateItem item, int depth)
+        {
+            item.Depth = depth;
+            if (item.Parent == null)
+            {
+                return;
+            }
 
+            SetDepth(item.Parent, depth + 1);
+        }
+        private void CalculateEndDates()
+        {
+            // ルートノードを取得する
+            var rootNodes = GetRootNodes();
+            foreach (var rootNode in rootNodes)
+            {
+                // ルートノードからの深さを0に設定する
+                SetDepth(rootNode, 0);
+                // DFSでノードを走査する
+                Traverse(rootNode, 0);
+            }
+        }
 
     }
 }
