@@ -8,28 +8,57 @@ namespace MQuoteApp
     {
         private List<EstimateItem> _nodes;
         private Dictionary<EstimateItem, List<EstimateItem>> _edges;
-        private Dictionary<EstimateItem, List<EstimateItem>> _items;
         private Dictionary<EstimateItem, List<EstimateItem>> _dependencies;
         private readonly Dictionary<EstimateItem, HashSet<EstimateItem>> _adjacencyList;
         private readonly Dictionary<EstimateItem, int> _inDegree;
+        private readonly List<EstimateItem> Items;
+        private readonly Dictionary<int, List<EstimateItem>> _dependencies;
+        private readonly Dictionary<int, EstimateItem> _items;
 
-        public EstimateDependencyGraph()
+
+        public EstimateDependencyGraph(List<EstimateItem> items, List<EstimateDependency> dependencies)
         {
-            _nodes = new List<EstimateItem>();
-            _edges = new Dictionary<EstimateItem, List<EstimateItem>>();
-            _items = new Dictionary<EstimateItem, List<EstimateItem>>();
-            _dependencies = new Dictionary<EstimateItem, List<EstimateItem>>();
+            _items = items.ToDictionary(i => i.Id, i => i);
+            _dependencies = dependencies.GroupBy(d => d.ToItemId)
+                .ToDictionary(g => g.Key, g => g.Select(d => _items[d.FromItemId]).ToList());
             _adjacencyList = new Dictionary<EstimateItem, HashSet<EstimateItem>>();
             _inDegree = new Dictionary<EstimateItem, int>();
+            foreach (var item in items)
+            {
+                AddNode(item);
+            }
+        }
+        public void EstimateDependency()
+        {
+            // Calculate start and end dates for all items in the graph
+            CalculateEndDate();
+
+            // Calculate dependencies for all items in the graph
+            foreach (var item in Items)
+            {
+                // Get all dependencies for this item
+                var dependencies = Dependencies.Where(d => d.ToItemId == item.Id).ToList();
+
+                // Sort dependencies by start date in ascending order
+                dependencies.Sort((d1, d2) => GetEstimateItem(d1.FromItemId).StartDate.CompareTo(GetEstimateItem(d2.FromItemId).StartDate));
+
+                // Set the dependencies for the item
+                EstimateItem item;
+                if (!Items.TryGetValue(id, out item))
+                {
+                    item = new EstimateItem(id, name);
+                    Items.Add(id, item);
+                }
+
+                if (item == null) return;
+
+                item.Dependencies = dependencies;
+
+            }
         }
 
         public void AddNode(EstimateItem node)
         {
-            if (!_nodes.Contains(node))
-            {
-                _nodes.Add(node);
-                _edges[node] = new List<EstimateItem>();
-            }
             if (!_adjacencyList.ContainsKey(node))
             {
                 _adjacencyList[node] = new HashSet<EstimateItem>();
@@ -39,18 +68,6 @@ namespace MQuoteApp
 
         public void AddEdge(EstimateItem from, EstimateItem to)
         {
-            if (!_nodes.Contains(from))
-            {
-                AddNode(from);
-            }
-            if (!_nodes.Contains(to))
-            {
-                AddNode(to);
-            }
-            if (!_edges[from].Contains(to))
-            {
-                _edges[from].Add(to);
-            }
             if (!_adjacencyList.ContainsKey(from))
             {
                 AddNode(from);
@@ -94,7 +111,7 @@ namespace MQuoteApp
             var visited = new HashSet<EstimateItem>();
             var inProgress = new HashSet<EstimateItem>();
 
-            foreach (var item in _dependencies.Keys)
+            foreach (var item in _items.Values)
             {
                 if (HasCircularDependency(item, visited, inProgress))
                 {
@@ -119,7 +136,7 @@ namespace MQuoteApp
             visited.Add(item);
             inProgress.Add(item);
 
-            foreach (var dependentItem in _dependencies[item])
+            foreach (var dependentItem in _dependencies.GetValueOrDefault(item.Id, Enumerable.Empty<EstimateItem>()))
             {
                 if (HasCircularDependency(dependentItem, visited, inProgress))
                 {
@@ -137,7 +154,7 @@ namespace MQuoteApp
             var visited = new HashSet<EstimateItem>();
             var finishDates = new Dictionary<EstimateItem, DateTime>();
 
-            foreach (var item in _dependencies.Keys)
+            foreach (var item in _items.Values)
             {
                 if (!visited.Contains(item))
                 {
@@ -154,27 +171,7 @@ namespace MQuoteApp
                     finishDate = date;
                 }
             }
-
             return finishDate;
-            while (queue.Count > 0)
-            {
-                var currNode = queue.Dequeue();
-                visited.Add(currNode);
-
-                foreach (var neighbor in _adjacencyList[currNode])
-                {
-                    if (!visited.Contains(neighbor))
-                    {
-                        _inDegree[neighbor]--;
-                        if (_inDegree[neighbor] == 0)
-                        {
-                            queue.Enqueue(neighbor);
-                        }
-                    }
-                }
-            }
-
-            return visited.Count != _inDegree.Count || _inDegree.Any(x => x.Value != 0);
         }
 
         private bool HasCircularDependencyRecursive(EstimateItem node, HashSet<EstimateItem> visited, HashSet<EstimateItem> recursionStack)
@@ -239,27 +236,29 @@ namespace MQuoteApp
                 return new List<EstimateItem>();
             }
         }
+        private EstimateItem GetEstimateItem(int id)
+        {
+            var result = _items.FirstOrDefault(x => x.Id.ToString() == id);
+            return result;
+        }
+
 
         private void Visit(EstimateItem item, HashSet<EstimateItem> visited, Dictionary<EstimateItem, DateTime> finishDates)
         {
             visited.Add(item);
 
-            DateTime maxFinishDate = DateTime.MinValue;
+            DateTime startDate = item.StartDate;
+            DateTime finishDate = item.FinishDate;
 
-            foreach (var dependentItem in _dependencies[item])
+            foreach (var dependentItem in _adjacencyList[item])
             {
-                if (!visited.Contains(dependentItem))
+                finishDates[dependentItem] = finishDates.ContainsKey(dependentItem) ?
+                    DateTime.MaxValue : item.FinishDate;
+                if (--_inDegree[dependentItem] == 0)
                 {
                     Visit(dependentItem, visited, finishDates);
                 }
-
-                if (finishDates.ContainsKey(dependentItem) && finishDates[dependentItem] > maxFinishDate)
-                {
-                    maxFinishDate = finishDates[dependentItem];
-                }
             }
-
-            finishDates[item] = item.CalculateEndDate(maxFinishDate);
         }
         public void RemoveDependency(EstimateItem item)
         {
@@ -375,10 +374,11 @@ namespace MQuoteApp
             // ノードの深さを設定する
             SetDepth(item, depth);
         }
-        private IEnumerable<EstimateItem> GetRootNodes()
+        private List<EstimateItem> GetRootNodes()
         {
-            return _items.Where(item => item.Dependencies.Count == 0);
+            return Items.Where(item => !Dependencies.Any(d => d.Id == item.Id)).ToList();
         }
+
 
     }
 }
