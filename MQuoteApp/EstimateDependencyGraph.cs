@@ -8,12 +8,16 @@ namespace MQuoteApp
         private List<EstimateItem> _nodes;
         private Dictionary<EstimateItem, List<EstimateItem>> _edges;
         private Dictionary<EstimateItem, List<EstimateItem>> _dependencies;
+        private readonly Dictionary<EstimateItem, HashSet<EstimateItem>> _adjacencyList;
+        private readonly Dictionary<EstimateItem, int> _inDegree;
 
         public EstimateDependencyGraph()
         {
             _nodes = new List<EstimateItem>();
             _edges = new Dictionary<EstimateItem, List<EstimateItem>>();
             _dependencies = new Dictionary<EstimateItem, List<EstimateItem>>();
+            _adjacencyList = new Dictionary<EstimateItem, HashSet<EstimateItem>>();
+            _inDegree = new Dictionary<EstimateItem, int>();
         }
 
         public void AddNode(EstimateItem node)
@@ -22,6 +26,11 @@ namespace MQuoteApp
             {
                 _nodes.Add(node);
                 _edges[node] = new List<EstimateItem>();
+            }
+            if (!_adjacencyList.ContainsKey(node))
+            {
+                _adjacencyList[node] = new HashSet<EstimateItem>();
+                _inDegree[node] = 0;
             }
         }
 
@@ -38,6 +47,21 @@ namespace MQuoteApp
             if (!_edges[from].Contains(to))
             {
                 _edges[from].Add(to);
+            }
+            if (!_adjacencyList.ContainsKey(from))
+            {
+                AddNode(from);
+            }
+
+            if (!_adjacencyList.ContainsKey(to))
+            {
+                AddNode(to);
+            }
+
+            if (!_adjacencyList[from].Contains(to))
+            {
+                _adjacencyList[from].Add(to);
+                _inDegree[to]++;
             }
         }
         public void AddDependency(EstimateItem item, List<EstimateItem> dependentItems)
@@ -104,8 +128,9 @@ namespace MQuoteApp
 
             return false;
         }
-        public DateTime CalculateFinishDate()
+        public bool CalculateFinishDate()
         {
+            var queue = new Queue<EstimateItem>(_inDegree.Where(x => x.Value == 0).Select(x => x.Key));
             var visited = new HashSet<EstimateItem>();
             var finishDates = new Dictionary<EstimateItem, DateTime>();
 
@@ -128,7 +153,27 @@ namespace MQuoteApp
             }
 
             return finishDate;
+            while (queue.Count > 0)
+            {
+                var currNode = queue.Dequeue();
+                visited.Add(currNode);
+
+                foreach (var neighbor in _adjacencyList[currNode])
+                {
+                    if (!visited.Contains(neighbor))
+                    {
+                        _inDegree[neighbor]--;
+                        if (_inDegree[neighbor] == 0)
+                        {
+                            queue.Enqueue(neighbor);
+                        }
+                    }
+                }
+            }
+
+            return visited.Count != _inDegree.Count || _inDegree.Any(x => x.Value != 0);
         }
+    }
 
         private bool HasCircularDependencyRecursive(EstimateItem node, HashSet<EstimateItem> visited, HashSet<EstimateItem> recursionStack)
         {
@@ -154,12 +199,26 @@ namespace MQuoteApp
             return false;
         }
 
-        public void RemoveEdge(EstimateItem from, EstimateItem to)
+        public bool RemoveEdge(EstimateItem from, EstimateItem to)
         {
             if (_edges.ContainsKey(from))
             {
                 _edges[from].Remove(to);
             }
+            if (!_adjacencyList.ContainsKey(from) || !_adjacencyList.ContainsKey(to))
+            {
+                return false;
+            }
+
+            if (!_adjacencyList[from].Contains(to))
+            {
+                return false;
+            }
+
+            _adjacencyList[from].Remove(to);
+            _inDegree[to]--;
+
+            return true;
         }
 
         public List<EstimateItem> GetNodes()
@@ -267,5 +326,5 @@ namespace MQuoteApp
             // Output the graph in PNG format
             graph.RenderToFile("EstimateDependencyGraph.png");
         }
-    }
 }
+
