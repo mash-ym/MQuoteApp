@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MQuoteApp
 {
@@ -7,6 +8,7 @@ namespace MQuoteApp
     {
         private List<EstimateItem> _nodes;
         private Dictionary<EstimateItem, List<EstimateItem>> _edges;
+        private Dictionary<EstimateItem, List<EstimateItem>> _items;
         private Dictionary<EstimateItem, List<EstimateItem>> _dependencies;
         private readonly Dictionary<EstimateItem, HashSet<EstimateItem>> _adjacencyList;
         private readonly Dictionary<EstimateItem, int> _inDegree;
@@ -15,6 +17,7 @@ namespace MQuoteApp
         {
             _nodes = new List<EstimateItem>();
             _edges = new Dictionary<EstimateItem, List<EstimateItem>>();
+            _items = new Dictionary<EstimateItem, List<EstimateItem>>();
             _dependencies = new Dictionary<EstimateItem, List<EstimateItem>>();
             _adjacencyList = new Dictionary<EstimateItem, HashSet<EstimateItem>>();
             _inDegree = new Dictionary<EstimateItem, int>();
@@ -173,7 +176,6 @@ namespace MQuoteApp
 
             return visited.Count != _inDegree.Count || _inDegree.Any(x => x.Value != 0);
         }
-    }
 
         private bool HasCircularDependencyRecursive(EstimateItem node, HashSet<EstimateItem> visited, HashSet<EstimateItem> recursionStack)
         {
@@ -326,5 +328,58 @@ namespace MQuoteApp
             // Output the graph in PNG format
             graph.RenderToFile("EstimateDependencyGraph.png");
         }
+
+        public void CalculateEndDate()
+        {
+            // ルートノードを取得する
+            var rootNodes = GetRootNodes();
+            foreach (var rootNode in rootNodes)
+            {
+                // ルートノードからの深さを0に設定する
+                SetDepth(rootNode, 0);
+                // DFSでノードを走査する
+                Traverse(rootNode, 0);
+            }
+            // グラフを走査して終了日を計算する
+            TraverseGraph();
+
+            // グラフを走査してクリティカルパスを計算する
+            CalculateCriticalPath();
+            // DFSでノードを走査する
+        }
+        // DFSでノードを走査する
+        private void Traverse(EstimateItem item, int depth)
+        {
+            // 計算済みの場合は何もしない
+            if (item.FinishDate.HasValue) return;
+
+            // 依存するノードの終了日を再帰的に計算する
+            foreach (var dependency in item.Dependencies)
+            {
+                var dependencyItem = GetEstimateItem(dependency.Id);
+                if (dependencyItem == null) continue;
+                Traverse(dependencyItem, depth + 1);
+                // 依存するノードの中で終了日が最大のものを採用する
+                if (dependencyItem.EndDate.HasValue && (!item.FinishDate.HasValue || item.FinishDate.Value < dependencyItem.EndDate.Value))
+                {
+                    item.FinishDate = dependencyItem.FinishDate.Value;
+                }
+            }
+
+            // 依存するノードがない場合は開始日から期間を加算したものを終了日とする
+            if (!item.FinishDate.HasValue)
+            {
+                item.FinishDate = item.StartDate.AddDays((double)item.Duration);
+            }
+
+            // ノードの深さを設定する
+            SetDepth(item, depth);
+        }
+        private IEnumerable<EstimateItem> GetRootNodes()
+        {
+            return _items.Where(item => item.Dependencies.Count == 0);
+        }
+
+    }
 }
 
